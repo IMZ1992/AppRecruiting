@@ -51,52 +51,64 @@ export async function evaluateCandidateForOffer(candidate: any, offer: any) {
 export async function evaluateAllCandidatesForOffer(offer: any, candidates: any[]) {
   if (!candidates || candidates.length === 0) return [];
 
-  const prompt = `
-    Tengo la siguiente oferta de trabajo:
-    Título: ${offer.title}
-    Descripción: ${offer.description}
-    Requisitos: ${offer.requirements}
+  const results = [];
+  const batchSize = 10; // Process in batches of 10 for higher accuracy without hitting rate limits
+  
+  for (let i = 0; i < candidates.length; i += batchSize) {
+    const batch = candidates.slice(i, i + batchSize);
     
-    Y tengo la siguiente lista de candidatos (en formato JSON):
-    ${JSON.stringify(candidates.map(c => ({
-      id: c.id,
-      Nombre: c.Nombre,
-      Perfil: c.Perfil,
-      KeyKnowledge: c['Key Knowledge'],
-      Conocimiento: c.Conocimiento
-    })))}
-    
-    Evalúa a todos los candidatos para esta oferta. Devuelve una lista con el resultado de la evaluación para cada candidato.
-    Responde en formato JSON.
-  `;
+    const prompt = `
+      Actúa como un reclutador experto. Evalúa de forma precisa y estricta el encaje de los siguientes ${batch.length} candidatos para esta oferta de trabajo.
+      
+      Oferta:
+      Título: ${offer.title}
+      Descripción: ${offer.description}
+      Requisitos: ${offer.requirements}
+      
+      Candidatos a evaluar:
+      ${JSON.stringify(batch.map(c => ({
+        id: c.id,
+        Nombre: c.Nombre,
+        Perfil: c.Perfil,
+        KeyKnowledge: c['Key Knowledge'],
+        Conocimiento: c.Conocimiento
+      })))}
+      
+      Para CADA candidato en la lista, analiza detalladamente su encaje con los requisitos de la oferta.
+      Sé muy estricto y preciso con el 'score' (0 a 100). Solo da scores altos (>80) si cumplen la mayoría de los requisitos.
+      Devuelve estrictamente un array JSON con los resultados.
+    `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              candidateId: { type: Type.STRING },
-              isFit: { type: Type.BOOLEAN },
-              recommendation: { type: Type.STRING },
-              score: { type: Type.NUMBER }
-            },
-            required: ['candidateId', 'isFit', 'recommendation', 'score']
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                candidateId: { type: Type.STRING },
+                isFit: { type: Type.BOOLEAN },
+                recommendation: { type: Type.STRING },
+                score: { type: Type.NUMBER }
+              },
+              required: ['candidateId', 'isFit', 'recommendation', 'score']
+            }
           }
         }
-      }
-    });
-    
-    return JSON.parse(response.text || '[]');
-  } catch (error) {
-    console.error("AI Bulk Evaluation error:", error);
-    return [];
+      });
+      
+      const batchResults = JSON.parse(response.text || '[]');
+      results.push(...batchResults);
+    } catch (error) {
+      console.error("AI Bulk Evaluation error in batch:", error);
+    }
   }
+  
+  return results;
 }
 
 export async function recommendCandidatesForNeeds(needs: string, candidates: any[]) {

@@ -3,6 +3,19 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* NTT DATA Modern Color Palette */
+  --color-ntt-blue-50: #f0f7ff;
+  --color-ntt-blue-100: #e0effe;
+  --color-ntt-blue-200: #b9dffd;
+  --color-ntt-blue-300: #7dc4fb;
+  --color-ntt-blue-400: #38a3f8;
+  --color-ntt-blue-500: #0e85e5;
+  --color-ntt-blue-600: #0059a3; /* Primary NTT Blue */
+  --color-ntt-blue-700: #004785;
+  --color-ntt-blue-800: #003c6e;
+  --color-ntt-blue-900: #002b5c; /* Dark NTT Blue */
+  --color-ntt-blue-950: #001b3d;
 }
 
 html {

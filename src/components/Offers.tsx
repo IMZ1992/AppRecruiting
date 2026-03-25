@@ -38,18 +38,21 @@ export const Offers: React.FC = () => {
       try {
         const evaluations = await evaluateAllCandidatesForOffer(offerToSave, allCandidates);
         
-        evaluations.forEach((evalResult: any) => {
-          if (evalResult.isFit) {
-            addApplication({
-              id: crypto.randomUUID(),
-              candidateId: evalResult.candidateId,
-              offerId: newOfferId,
-              status: 'pending',
-              aiRecommendation: evalResult.recommendation,
-              isFit: evalResult.isFit,
-              score: evalResult.score
-            });
-          }
+        // Sort by score descending and take top 5
+        const top5Evaluations = evaluations
+          .sort((a: any, b: any) => b.score - a.score)
+          .slice(0, 5);
+        
+        top5Evaluations.forEach((evalResult: any) => {
+          addApplication({
+            id: crypto.randomUUID(),
+            candidateId: evalResult.candidateId,
+            offerId: newOfferId,
+            status: 'pending',
+            aiRecommendation: evalResult.recommendation,
+            isFit: evalResult.isFit,
+            score: evalResult.score
+          });
         });
       } catch (error) {
         console.error("Error auto-evaluating candidates:", error);
@@ -368,9 +371,40 @@ export const Offers: React.FC = () => {
               </div>
 
               <div className="p-6 bg-slate-50/50">
-                <h3 className="text-lg font-semibold text-slate-900 mb-5 flex items-center gap-2 tracking-tight">
-                  <Users className="h-5 w-5 text-slate-400" /> Candidatos Vinculados
-                </h3>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 tracking-tight">
+                    <Users className="h-5 w-5 text-slate-400" /> Candidatos Vinculados
+                  </h3>
+                  
+                  {/* Vincular nuevo candidato */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <select 
+                      id="candidate-select"
+                      className="flex-1 sm:w-64 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shadow-sm transition-all bg-white"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Vincular candidato...</option>
+                      {allCandidates
+                        .filter(c => !getApplicationsForOffer(selectedOffer.id).some(app => app.candidateId === c.id))
+                        .map(c => (
+                        <option key={c.id} value={c.id}>{c.Nombre} - {c.Perfil}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={() => {
+                        const select = document.getElementById('candidate-select') as HTMLSelectElement;
+                        if (select.value) {
+                          handleEvaluateCandidate(select.value, selectedOffer.id);
+                          select.value = "";
+                        }
+                      }}
+                      disabled={isEvaluating}
+                      className="px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                    >
+                      {isEvaluating ? 'Evaluando...' : 'Vincular'}
+                    </button>
+                  </div>
+                </div>
                 
                 <div className="space-y-4">
                   {getApplicationsForOffer(selectedOffer.id).map(app => {
@@ -455,38 +489,6 @@ export const Offers: React.FC = () => {
                   {getApplicationsForOffer(selectedOffer.id).length === 0 && (
                     <p className="text-slate-500 text-sm text-center py-8 bg-white rounded-2xl border border-dashed border-slate-200">No hay candidatos vinculados a esta oferta aún.</p>
                   )}
-                </div>
-
-                {/* Vincular nuevo candidato */}
-                <div className="mt-8 pt-6 border-t border-slate-200/60">
-                  <h4 className="text-sm font-semibold text-slate-900 mb-3 tracking-tight">Vincular Candidato Manualmente</h4>
-                  <div className="flex gap-3">
-                    <select 
-                      id="candidate-select"
-                      className="flex-1 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shadow-sm transition-all"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Selecciona un candidato...</option>
-                      {allCandidates
-                        .filter(c => !getApplicationsForOffer(selectedOffer.id).some(app => app.candidateId === c.id))
-                        .map(c => (
-                        <option key={c.id} value={c.id}>{c.Nombre} - {c.Perfil}</option>
-                      ))}
-                    </select>
-                    <button 
-                      onClick={() => {
-                        const select = document.getElementById('candidate-select') as HTMLSelectElement;
-                        if (select.value) {
-                          handleEvaluateCandidate(select.value, selectedOffer.id);
-                          select.value = "";
-                        }
-                      }}
-                      disabled={isEvaluating}
-                      className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
-                    >
-                      {isEvaluating ? 'Evaluando con IA...' : 'Vincular y Evaluar'}
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>

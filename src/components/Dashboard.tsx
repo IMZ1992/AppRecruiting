@@ -17,7 +17,10 @@ export const Dashboard: React.FC = () => {
   }));
 
   const locationCount = allCandidates.reduce((acc, curr) => {
-    const loc = curr.Localización ? curr.Localización.split(',')[0] : 'Unknown';
+    let loc = curr.Localización ? curr.Localización.split(',')[0].trim() : 'Unknown';
+    if (loc !== 'Unknown') {
+      loc = loc.charAt(0).toUpperCase() + loc.slice(1).toLowerCase();
+    }
     acc[loc] = (acc[loc] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
