@@ -12,7 +12,6 @@ export const Offers: React.FC = () => {
   const [isEditingOffer, setIsEditingOffer] = useState(false);
   const [editingOfferData, setEditingOfferData] = useState<Partial<Offer>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [autoEvaluate, setAutoEvaluate] = useState(false);
   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
   const [statusModal, setStatusModal] = useState<{ isOpen: boolean, appId: string, status: string, name: string }>({
     isOpen: false,
@@ -29,7 +28,7 @@ export const Offers: React.FC = () => {
         title: newOffer.title,
         description: newOffer.description,
         requirements: newOffer.requirements || '',
-        status: 'Abierta',
+        status: 'open',
         type: newOffer.type || 'Staffing',
         client: newOffer.type === 'Proyecto' ? newOffer.client : undefined,
         projectCode: newOffer.type === 'Proyecto' ? newOffer.projectCode : undefined,
@@ -40,34 +39,31 @@ export const Offers: React.FC = () => {
       setNewOffer({});
       setSelectedOffer(offerToSave);
 
-      // Auto-evaluate all candidates if checkbox is checked
-      if (autoEvaluate) {
-        setIsEvaluating(true);
-        try {
-          const evaluations = await evaluateAllCandidatesForOffer(offerToSave, allCandidates);
-          
-          // Sort by score descending and take top 5
-          const top5Evaluations = evaluations
-            .sort((a: any, b: any) => b.score - a.score)
-            .slice(0, 5);
-          
-          top5Evaluations.forEach((evalResult: any) => {
-            addApplication({
-              id: crypto.randomUUID(),
-              candidateId: evalResult.candidateId,
-              offerId: newOfferId,
-              status: 'pending',
-              aiRecommendation: evalResult.recommendation,
-              isFit: evalResult.isFit,
-              score: evalResult.score
-            });
+      // Auto-evaluate all candidates
+      setIsEvaluating(true);
+      try {
+        const evaluations = await evaluateAllCandidatesForOffer(offerToSave, allCandidates);
+        
+        // Sort by score descending and take top 5
+        const top5Evaluations = evaluations
+          .sort((a: any, b: any) => b.score - a.score)
+          .slice(0, 5);
+        
+        top5Evaluations.forEach((evalResult: any) => {
+          addApplication({
+            id: crypto.randomUUID(),
+            candidateId: evalResult.candidateId,
+            offerId: newOfferId,
+            status: 'pending',
+            aiRecommendation: evalResult.recommendation,
+            isFit: evalResult.isFit,
+            score: evalResult.score
           });
-        } catch (error) {
-          console.error("Error auto-evaluating candidates:", error);
-        }
-        setIsEvaluating(false);
+        });
+      } catch (error) {
+        console.error("Error auto-evaluating candidates:", error);
       }
-      setAutoEvaluate(false); // Reset for next time
+      setIsEvaluating(false);
     }
   };
 
@@ -177,18 +173,6 @@ export const Offers: React.FC = () => {
                 </div>
               </div>
             )}
-            <div className="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
-              <input
-                type="checkbox"
-                id="auto-evaluate"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
-                checked={autoEvaluate}
-                onChange={e => setAutoEvaluate(e.target.checked)}
-              />
-              <label htmlFor="auto-evaluate" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
-                Analizar automáticamente los 5 candidatos más compatibles con esta oferta (IA)
-              </label>
-            </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
               <button
                 onClick={() => setIsAdding(false)}
@@ -225,8 +209,8 @@ export const Offers: React.FC = () => {
                   <h3 className="font-semibold text-slate-900 tracking-tight">{offer.title}</h3>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
-                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${offer.status === 'Abierta' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
-                    {offer.status}
+                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${offer.status === 'open' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                    {offer.status === 'open' ? 'Abierta' : 'Cerrada'}
                   </span>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
                     {offer.type || 'Staffing'}
@@ -272,10 +256,10 @@ export const Offers: React.FC = () => {
                       </button>
                     )}
                     <button 
-                      onClick={() => updateOffer(selectedOffer.id, { status: selectedOffer.status === 'Abierta' ? 'Cerrada' : 'Abierta' })}
+                      onClick={() => updateOffer(selectedOffer.id, { status: selectedOffer.status === 'open' ? 'closed' : 'open' })}
                       className="px-4 py-2 text-sm font-medium border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
                     >
-                      {selectedOffer.status === 'Abierta' ? 'Cerrar Oferta' : 'Reabrir Oferta'}
+                      {selectedOffer.status === 'open' ? 'Cerrar Oferta' : 'Reabrir Oferta'}
                     </button>
                     <button 
                       onClick={() => { deleteOffer(selectedOffer.id); setSelectedOffer(null); setIsEditingOffer(false); }}

@@ -24,33 +24,12 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [allCandidates, setAllCandidates] = useState<Candidate[]>(() => {
-    const saved = localStorage.getItem('ntt_candidates');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [customFields, setCustomFields] = useState<string[]>([]);
-  const [applications, setApplications] = useState<Application[]>(() => {
-    const saved = localStorage.getItem('ntt_applications');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [offers, setOffers] = useState<Offer[]>(() => {
-    const saved = localStorage.getItem('ntt_offers');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-
-  useEffect(() => {
-    localStorage.setItem('ntt_candidates', JSON.stringify(allCandidates));
-  }, [allCandidates]);
-
-  useEffect(() => {
-    localStorage.setItem('ntt_offers', JSON.stringify(offers));
-  }, [offers]);
-
-  useEffect(() => {
-    localStorage.setItem('ntt_applications', JSON.stringify(applications));
-  }, [applications]);
 
   const fetchData = async (force = false) => {
     setIsRefreshing(true);

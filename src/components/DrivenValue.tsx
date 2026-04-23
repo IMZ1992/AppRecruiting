@@ -1,11 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../AppContext';
-import { Upload, FileText, CheckCircle, Search, Sparkles, User, Briefcase, MapPin, Edit2, X, Trash2, Download, Plus, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { Upload, FileText, CheckCircle, Search, Sparkles, User, Briefcase, MapPin, Edit2, X, Trash2, Download, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Candidate } from '../types';
 import { recommendCandidatesForNeeds } from '../ai';
-import { KeyKnowledgeBadges } from './KeyKnowledgeBadges';
 
 export const DrivenValue: React.FC = () => {
   const { allCandidates, addDrivenValueCandidates, updateCandidate, deleteDrivenValueCandidate } = useAppContext();
@@ -23,33 +21,6 @@ export const DrivenValue: React.FC = () => {
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
 
   const teamCandidates = allCandidates.filter(c => c.source === 'driven-value' || c.isDrivenValue);
-
-  // Chart Data Processing
-  const profileCount = teamCandidates.reduce((acc, curr) => {
-    const perfil = curr.Perfil?.trim();
-    if (perfil && perfil !== '' && perfil.toLowerCase() !== 'unknown') {
-      acc[perfil] = (acc[perfil] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
-
-  const profileData = Object.keys(profileCount)
-    .map(key => ({ name: key, count: profileCount[key] }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
-
-  const statusCount = teamCandidates.reduce((acc, curr) => {
-    const status = curr.drivenValueStatus || 'Staffing';
-    acc[status] = (acc[status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const statusData = [
-    { name: 'Staffing', value: statusCount['Staffing'] || 0, fill: '#f59e0b' },
-    { name: 'En Proyecto', value: statusCount['Proyecto'] || 0, fill: '#10b981' }
-  ].filter(d => d.value > 0);
-
-  const COLORS = ['#0059a3', '#002b5c', '#0087d5', '#66b7e6', '#004280', '#339fdd', '#99cfee', '#001633'];
 
   const standardKeys = ['id', 'source', 'drivenValueStatus', 'Nombre', 'Perfil', 'Localización', 'Key Knowledge', 'isDrivenValue', 'status', 'step', 'rating', 'comments', 'customFields'];
   const allKeys = new Set<string>();
@@ -255,54 +226,6 @@ export const DrivenValue: React.FC = () => {
         </div>
       )}
 
-      {/* Analytics Section */}
-      {teamCandidates.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-            <h3 className="text-lg font-semibold mb-6 text-slate-800 tracking-tight">Candidatos por Perfil</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={profileData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{fill: '#64748b'}} axisLine={{stroke: '#cbd5e1'}} tickLine={false} />
-                  <YAxis dataKey="name" type="category" width={150} tick={{fontSize: 12, fill: '#475569'}} axisLine={{stroke: '#cbd5e1'}} tickLine={false} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}} 
-                    contentStyle={{borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} 
-                  />
-                  <Bar dataKey="count" fill="#0059a3" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-            <h3 className="text-lg font-semibold mb-6 text-slate-800 tracking-tight">Estado de Asignación</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '12px', color: '#475569'}} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Team List Section */}
       <div 
         className={`bg-white rounded-2xl shadow-sm border transition-all ${isDragging ? 'border-indigo-400 bg-indigo-50/50 shadow-md' : 'border-slate-200/60'}`}
@@ -417,10 +340,10 @@ export const DrivenValue: React.FC = () => {
                     </div>
                   )}
                   <div className="flex items-start gap-2 text-slate-600 text-sm">
-                    <Briefcase className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
-                    <div className="flex-1">
-                      <KeyKnowledgeBadges knowledge={candidate['Key Knowledge']} />
-                    </div>
+                    <Briefcase className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <span className="line-clamp-2 leading-relaxed">
+                      {candidate['Key Knowledge'] || 'Sin conocimientos registrados'}
+                    </span>
                   </div>
                 </div>
 

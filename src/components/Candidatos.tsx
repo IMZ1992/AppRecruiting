@@ -3,7 +3,6 @@ import { useAppContext } from '../AppContext';
 import { Search, Edit2, X, Plus, Download, MapPin, Briefcase, Mail, Phone, MessageSquare, ExternalLink, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Candidate } from '../types';
 import * as XLSX from 'xlsx';
-import { KeyKnowledgeBadges } from './KeyKnowledgeBadges';
 
 export const Candidatos: React.FC = () => {
   const { allCandidates, updateCandidate, customFields, addCustomField, applications, offers } = useAppContext();
@@ -170,9 +169,9 @@ export const Candidatos: React.FC = () => {
                       {candidate.Perfil || candidate.Candidatura || 'Sin Perfil'}
                     </span>
                   </div>
-                  <div className="mb-2">
-                    <KeyKnowledgeBadges knowledge={candidate['Key Knowledge']} />
-                  </div>
+                  <p className="text-sm text-slate-500 line-clamp-1">
+                    {candidate['Key Knowledge'] || 'Sin conocimientos registrados'}
+                  </p>
                   <div className="flex gap-3 mt-2">
                     {candidate.Entrevistador && (
                       <span className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
