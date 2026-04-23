@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 
-const ai = "AIzaSyAze9tzAuDNwRrwwscnJuYbd44jUmDRAgM";//= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function evaluateCandidateForOffer(candidate: any, offer: any) {
   const prompt = `
@@ -37,7 +37,7 @@ export async function evaluateCandidateForOffer(candidate: any, offer: any) {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3.1-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
